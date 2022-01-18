@@ -21,15 +21,15 @@ def init():
     
 
 
-def jugador_minutos():
+def jugador_resumen():
     df_appearances.createOrReplaceTempView('sqlAppeareances')
     df_players.createOrReplaceTempView('sqlPlayers')
-     
-    result = spark.sql(''' SELECT sqlAppeareances.player_id, sqlAppeareances.goals, sqlAppeareances.assists, sqlAppeareances.minutes_played, sqlPlayers.name FROM sqlPlayers 
-    JOIN sqlAppeareances ON sqlPlayers.player_id = sqlAppeareances.player_id''').show()#.toJSON().collect()
+    
+    result = spark.sql(''' SELECT FIRST(sqlAppeareances.player_id) AS player_id, sqlPlayers.name, SUM(sqlAppeareances.goals), SUM(sqlAppeareances.assists), round(AVG(sqlAppeareances.minutes_played), 2) AS minutes_played FROM sqlPlayers 
+    JOIN sqlAppeareances ON sqlPlayers.player_id = sqlAppeareances.player_id GROUP BY sqlPlayers.name ORDER BY player_id''').show()#.toJSON().collect()
     return json.dumps(result)
 
 
 if __name__ == "__main__":
     init()
-    jugador_minutos()
+    jugador_resumen()
