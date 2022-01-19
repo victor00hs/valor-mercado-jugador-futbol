@@ -33,6 +33,15 @@ def jugador_resumen():
     JOIN sqlAppeareances ON sqlPlayers.player_id = sqlAppeareances.player_id GROUP BY sqlPlayers.name ORDER BY player_id''').show()#.toJSON().collect()
     return json.dumps(result)
 
+def jugador_position_foot_price():
+    df_players.createOrReplaceTempView('sqlPlayers')
+    df_final.createOrReplaceTempView('sqlFinal')
+    result = spark.sql(''' SELECT sqlPlayers.pretty_name, sqlPlayers.position, sqlPlayers.foot, sqlFinal.Player, sqlFinal.Market_value, sqlFinal.Club_x FROM sqlPlayers 
+    JOIN sqlFinal ON sqlPlayers.pretty_name = sqlFinal.Player WHERE position = "Midfield" AND foot = "Right" ''').show()
+    return json.dumps(result)
+
+
 if __name__ == "__main__":
     load_data_bucket()
-    jugador_resumen()
+    #jugador_resumen()
+    #jugador_position_foot_price()
