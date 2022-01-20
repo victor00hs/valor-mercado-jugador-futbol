@@ -1,3 +1,4 @@
+import re
 from pyspark.sql import SparkSession
 import json
 from flask import Flask, request
@@ -38,15 +39,33 @@ def load_data_bucket():
 def jugador_resume():
     df_appearances.createOrReplaceTempView('sqlAppeareances')
     df_players.createOrReplaceTempView('sqlPlayers')
-    result = spark.sql(''' SELECT FIRST(sqlAppeareances.player_id) AS player_id, sqlPlayers.name, SUM(sqlAppeareances.goals), SUM(sqlAppeareances.assists), round(AVG(sqlAppeareances.minutes_played), 2) AS media_minutes_played, COUNT(sqlPlayers.player_id) AS games_played FROM sqlPlayers 
-    JOIN sqlAppeareances ON sqlPlayers.player_id = sqlAppeareances.player_id GROUP BY sqlPlayers.name ORDER BY player_id''').toJSON().collect()
+    result = spark.sql(''' SELECT FIRST(sqlAppeareances.player_id) AS player_id, sqlPlayers.name, SUM(sqlAppeareances.goals), SUM(sqlAppeareances.assists), 
+    round(AVG(sqlAppeareances.minutes_played), 2) AS media_minutes_played, COUNT(sqlPlayers.player_id) AS games_played 
+    FROM sqlPlayers 
+    JOIN sqlAppeareances ON sqlPlayers.player_id = sqlAppeareances.player_id 
+    GROUP BY sqlPlayers.name 
+    ORDER BY player_id ''').toJSON().collect()
     return json.dumps(result)
 
+@app.route('/api/jugador_position_foot_price', methods=['GET'])
 def jugador_position_foot_price():
     df_players.createOrReplaceTempView('sqlPlayers')
     df_final.createOrReplaceTempView('sqlFinal')
-    result = spark.sql(''' SELECT sqlPlayers.pretty_name, sqlPlayers.position, sqlPlayers.foot, sqlFinal.Player, sqlFinal.Market_value, sqlFinal.Club_x FROM sqlPlayers 
-    JOIN sqlFinal ON sqlPlayers.pretty_name = sqlFinal.Player WHERE position = "Midfield" AND foot = "Right" ''').show()
+    result = spark.sql(''' SELECT sqlPlayers.pretty_name, sqlPlayers.position, sqlPlayers.foot, sqlFinal.Player, sqlFinal.Market_value, sqlFinal.Club_x 
+    FROM sqlPlayers 
+    JOIN sqlFinal ON sqlPlayers.pretty_name = sqlFinal.Player 
+    WHERE position = "Midfield" AND foot = "Right" ''').toJSON().collect()
+    return json.dumps(result)
+
+@app.route('/api/seleccion_inglesa', methods=['GET'])
+def seleccion_inglesa():
+    df_players.createOrReplaceTempView('sqlPlayers')
+    df_final.createOrReplaceTempView('sqlFinal')
+    result = spark.sql(''' SELECT FIRST(sqlPlayers.pretty_name), FIRST(sqlPlayers.sub_position), FIRST(sqlFinal.Market_value), FIRST(sqlFinal.Nation) 
+    FROM sqlPlayers 
+    JOIN sqlFinal ON sqlPlayers.pretty_name = sqlFinal.Player 
+    WHERE Nation = "ENG" 
+    GROUP BY sqlPlayers.sub_position''').toJSON().collect()
     return json.dumps(result)
 
 if __name__ == "__main__":
