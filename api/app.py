@@ -1,4 +1,3 @@
-import re
 from pyspark.sql import SparkSession
 import json
 from flask import Flask, request
@@ -70,7 +69,7 @@ def seleccion_inglesa():
     df_players.createOrReplaceTempView('sqlPlayers')
     df_final.createOrReplaceTempView('sqlFinal')
     result = spark.sql(''' 
-    SELECT FIRST(sqlPlayers.pretty_name), FIRST(sqlPlayers.sub_position), FIRST(sqlFinal.Market_value), FIRST(sqlFinal.Nation) 
+    SELECT FIRST(sqlPlayers.pretty_name) AS pretty_name, FIRST(sqlPlayers.sub_position), FIRST(sqlFinal.Market_value), FIRST(sqlFinal.Nation) 
     FROM sqlPlayers 
     JOIN sqlFinal ON sqlPlayers.pretty_name = sqlFinal.Player 
     WHERE Nation = "ENG" 
@@ -103,6 +102,27 @@ def most_expensive_per_position():
         LIMIT 15
     ''').toJSON().collect()
     return json.dumps(query)
+
+@app.route('/api/roaster_value', methods=['GET'])
+def roaster_value():
+    df_clubs.createOrReplaceTempView('sqlClubs')
+    result = spark.sql(''' SELECT sqlClubs.pretty_name, sqlClubs.squad_size, sqlClubs.total_market_value, sqlClubs.total_market_value / sqlClubs.squad_size AS avg_player_value
+    FROM sqlClubs
+    WHERE squad_size != 0    
+    ORDER BY squad_size ASC
+    ''').toJSON().collect()
+    return json.dumps(result)
+
+@app.route('/api/local_victories', methods=['GET'])
+def local_victories():
+    df_clubs.createOrReplaceTempView('sqlClubs')
+    df_games.createOrReplaceTempView('sqlGames')
+    result = spark.sql(''' SELECT sqlGames.game_id, sqlGames.home_club_id, sqlGames.away_club_id, sqlGames.home_club_goals, sqlGames.away_club_goals, 
+    sqlClubs.club_id, sqlClubs.pretty_name 
+    FROM sqlGames
+    JOIN sqlClubs ON sqlGames.home_club_id = sqlClubs.club_id
+    WHERE sqlGames.home_club_id ="58" AND sqlGames.away_club_goals < sqlGames.home_club_goals ''').toJSON().collect()
+    return json.dumps(result)
 
 if __name__ == '__main__':
     load_data_bucket()

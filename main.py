@@ -48,16 +48,28 @@ def most_expensive_players(data):
     res = load_json_data(data)
     st.write(res)
 
+def roaster_value(data):
+    res = load_json_data(data)
+    st.write(res)
+
+def local_victories(data):
+    res = load_json_data(data)
+    st.write(res)
+
 def mainpage_requests():
     r_jugador_resume = requests.get(url='http://127.0.0.1:5000/api/jugador_resume').content
     r_jugador_position_foot_price = requests.get(url='http://127.0.0.1:5000/api/jugador_position_foot_price').content
     r_seleccion_inglesa = requests.get(url='http://127.0.0.1:5000/api/seleccion_inglesa').content
     r_most_expensive_players = requests.get(url='http://127.0.0.1:5000/api/most_expensive_players').content
+    r_roaster_value = requests.get(url='http://127.0.0.1:5000/api/roaster_value').content
+    r_local_victories = requests.get(url='http://127.0.0.1:5000/api/local_victories').content
 
     jugador_resume_table(r_jugador_resume)
     jugador_position_foot_price_table(r_jugador_position_foot_price)
     seleccion_inglesa_table(r_seleccion_inglesa)
     most_expensive_players(r_most_expensive_players)
+    roaster_value(r_roaster_value)
+    local_victories(r_local_victories)
 
 
 if __name__ == '__main__':
