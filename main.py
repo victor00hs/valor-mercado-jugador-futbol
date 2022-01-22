@@ -6,19 +6,24 @@ import json
 foot_selected = "Left"
 position_selected = "Midfield"
 
+# Load css settings
+def local_css(file_name):
+    with open(file_name) as f:
+        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+
 def settings_st():
     # Page settings
     st.set_page_config(
-        page_title="Grandes Volumenes de Datos",
-        page_icon="💻",
-        layout="wide",
-        initial_sidebar_state="expanded",
-        menu_items={'About':"""
-            ## Authors: 
-               Ramón Íñiguez Bascuas\n
-               Víctor Hernández Sanz\n
-               Rubén Ortiz Nieto\n
-            [Link to Github repository](https://github.com/victor00hs/valor-mercado-jugador-futbol)"""}
+    page_title="Grandes Volumenes de Datos",
+    page_icon="💻",
+    layout="wide",
+    initial_sidebar_state="expanded",
+    menu_items={'About':"""
+        ## Authors: 
+            Ramón Íñiguez Bascuas\n
+            Víctor Hernández Sanz\n
+            Rubén Ortiz Nieto\n
+        [Link to Github repository](https://github.com/victor00hs/valor-mercado-jugador-futbol)"""}
     )
     st.title('Valor de mercado de un jugador de futbol')
 
@@ -68,7 +73,11 @@ def jugador_resume_table(data):
 
 def most_expensive_players(data):
     res = load_json_data(data)
-    st.write(res)
+    df = pd.DataFrame(res).astype(str)
+    df = df.set_index('Name')
+    df['Market_Value'] = pd.to_numeric(df['Market_Value'])
+    st.header('Jugadores más caros del mercado')
+    st.bar_chart(df)
 
 def roaster_value(data):
     res = load_json_data(data)
@@ -99,6 +108,8 @@ def jugador_pos_request():
     
 
 if __name__ == '__main__':
+    local_css('styles/style.css')
+    # settings_st()
     try:
         #settings_st()
         data_request_foot_position()

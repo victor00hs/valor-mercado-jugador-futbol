@@ -113,7 +113,7 @@ def most_expensive_per_position():
     df_players.createOrReplaceTempView('players')
     df_clubs.createOrReplaceTempView('clubs')
     query = spark.sql('''
-        SELECT player_id, players.pretty_name, current_club_id, clubs.pretty_name, country_of_citizenship position, sub_position, highest_market_value_in_gbp
+        SELECT players.pretty_name AS Name, highest_market_value_in_gbp AS Market_Value
         FROM players
         JOIN clubs ON clubs.club_id = players.current_club_id
         ORDER BY highest_market_value_in_gbp DESC
