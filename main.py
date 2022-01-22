@@ -61,12 +61,14 @@ def data_request_foot_position():
 
 def seleccion_inglesa_table(data):
     st.header('11 Jugadores ingleses')
+    st.write('En esta tabla se muestran 11 jugadores ingleses de todas las sub posiciones junto al precio de cada uno.')
     res = load_json_data(data)
     df = pd.DataFrame(res).astype(str)
     st.write(df)
 
 def jugador_resume_table(data):
     st.header('Información general jugadores')
+    st.write('En esta tabla se muestran todos los jugadores ordenados por ID junto a la suma de goles, suma de asistencias y una media de los minutos jugados por partido.')
     res = load_json_data(data)
     df = pd.DataFrame(res).astype(str)
     st.write(df)
@@ -77,15 +79,19 @@ def most_expensive_players(data):
     df = df.set_index('Name')
     df['Market_Value'] = pd.to_numeric(df['Market_Value'])
     st.header('Jugadores más caros del mercado')
+    st.write('En esta gráfica se puede ver los 15 jugadores más caros del mercado.')
     st.bar_chart(df)
 
 def roaster_value(data):
     res = load_json_data(data)
-    st.write(res)
+    df = pd.DataFrame(res).astype(str)
+    st.write(df)
 
 def local_victories(data):
     res = load_json_data(data)
-    st.write(res)
+    limit_res = res[:21]
+    df = pd.DataFrame(limit_res).astype(str)
+    st.write(df)
 
 def mainpage_requests():
     r_jugador_resume = requests.get(url='http://127.0.0.1:5000/api/jugador_resume').content
