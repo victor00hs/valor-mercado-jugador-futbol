@@ -4,6 +4,8 @@ from flask import Flask, request
 from flask_cors import CORS
 
 # Global variables
+foot = "Left"
+position = "Midfield"
 
 spark = SparkSession.builder \
     .appName('main') \
@@ -61,9 +63,37 @@ def jugador_position_foot_price():
     SELECT sqlPlayers.pretty_name, sqlPlayers.position, sqlPlayers.foot, sqlFinal.Player, sqlFinal.Market_value, sqlFinal.Club_x 
     FROM sqlPlayers 
     JOIN sqlFinal ON sqlPlayers.pretty_name = sqlFinal.Player 
-    WHERE position = "Midfield" AND foot = "Right" ''').toJSON().collect()
+    WHERE position = \"{}\" AND foot = \"{}\" '''.format(position, foot)).toJSON().collect()
     return json.dumps(result)
 
+''' Get the different values for "foot" variable '''
+@app.route('/api/get_data_foot', methods=['GET'])
+def get_data_foot():
+    rows = df_players.select('foot').distinct().collect()
+    return json.dumps([row['foot'] for row in rows])
+
+''' Take value of "foot" from selectBox '''
+@app.route('/api/foot_selected', methods=['POST'])
+def foot_selected():
+    global foot
+    request_data = json.loads(request.data)
+    foot = request_data['foot']
+    return json.dumps({'message': 'success'})
+
+''' Get the different values for "position" variable '''
+@app.route('/api/get_data_position', methods=['GET'])
+def get_data_position():
+    rows = df_players.select('position').distinct().orderBy('position', ascending=False).collect()
+    return json.dumps([row['position'] for row in rows])
+
+''' Take value of "position" from selectBox '''
+@app.route('/api/position_selected', methods=['POST'])
+def position_selected():
+    global position
+    request_data = json.loads(request.data)
+    position = request_data['position']
+    return json.dumps({'message': 'success'})
+    
 @app.route('/api/seleccion_inglesa', methods=['GET'])
 def seleccion_inglesa():
     df_players.createOrReplaceTempView('sqlPlayers')
@@ -74,18 +104,6 @@ def seleccion_inglesa():
     JOIN sqlFinal ON sqlPlayers.pretty_name = sqlFinal.Player 
     WHERE Nation = "ENG" 
     GROUP BY sqlPlayers.sub_position''').toJSON().collect()
-    return json.dumps(result)
-
-''' @victor00hs explica que hace esta funcion '''
-def jugador_position_foot_price():
-    df_players.createOrReplaceTempView('sqlPlayers')
-    df_final.createOrReplaceTempView('sqlFinal')
-    result = spark.sql(''' 
-        SELECT sqlPlayers.pretty_name, sqlPlayers.position, sqlPlayers.foot, sqlFinal.Player, sqlFinal.Market_value, sqlFinal.Club_x 
-        FROM sqlPlayers 
-        JOIN sqlFinal ON sqlPlayers.pretty_name = sqlFinal.Player 
-        WHERE position = 'Midfield' AND foot = 'Right'
-    ''').show()
     return json.dumps(result)
 
 ''' Displays the 15 most expensive players (biggest market value) along its player id, club id, country of citizenship
