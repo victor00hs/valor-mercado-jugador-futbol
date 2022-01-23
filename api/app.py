@@ -109,8 +109,7 @@ def seleccion_inglesa():
     GROUP BY sqlPlayers.sub_position''').toJSON().collect()
     return json.dumps(result)
 
-''' Displays the 15 most expensive players (biggest market value) along its player id, club id, country of citizenship
-    team, DOB, position, sub-position and market value '''
+''' Displays the 15 most expensive players (biggest market value) with its respective market value '''
 @app.route('/api/most_expensive_players', methods=['GET'])
 def most_expensive_per_position():
     df_players.createOrReplaceTempView('players')
@@ -124,7 +123,7 @@ def most_expensive_per_position():
     ''').toJSON().collect()
     return json.dumps(query)
 
-''' Nombre del equipo, numero de jugadores, el valor del equipo y la media del valor equipo '''
+''' Team name, number of players, team value and average of team value '''
 @app.route('/api/roaster_value', methods=['GET'])
 def roaster_value():
     df_clubs.createOrReplaceTempView('sqlClubs')
@@ -140,12 +139,50 @@ def roaster_value():
 def local_victories():
     df_clubs.createOrReplaceTempView('sqlClubs')
     df_games.createOrReplaceTempView('sqlGames')
-    result = spark.sql(''' SELECT sqlClubs.pretty_name, sqlGames.home_club_id AS ID_local, sqlGames.away_club_id AS ID_visitante, sqlGames.home_club_goals AS Goles_local, 
-    sqlGames.away_club_goals AS Goles_visitante
-    FROM sqlGames
-    JOIN sqlClubs ON sqlGames.home_club_id = sqlClubs.club_id
-    WHERE sqlClubs.pretty_name =\"{}\" AND sqlGames.away_club_goals < sqlGames.home_club_goals '''.format(pretty_name)).toJSON().collect()
+    result = spark.sql(''' SELECT home_club.pretty_name AS home_club, away_club.pretty_name AS away_club, sqlGames.home_club_goals AS Goles_local, 
+        sqlGames.away_club_goals AS Goles_visitante
+        FROM sqlGames
+        JOIN sqlClubs home_club ON sqlGames.home_club_id = home_club.club_id
+        JOIN sqlClubs away_club ON sqlGames.away_club_id = away_club.club_id
+        WHERE home_club.pretty_name =\"{}\" AND sqlGames.away_club_goals < sqlGames.home_club_goals '''.format(pretty_name)).toJSON().collect()
     return json.dumps(result)
+
+''' Take top scoring club from each different competition '''
+@app.route('/api/top_scoring_clubs', methods=['GET'])
+def top_scoring_clubs():
+    df_clubs.createOrReplaceTempView('sqlClubs')
+    df_games.createOrReplaceTempView('sqlGames')
+    df_leagues.createOrReplaceTempView('sqlLeagues')
+    result = spark.sql(''' 
+        SELECT sqlLeagues.league_id, FIRST(sqlLeagues.name) AS Name_league, 
+        SUM(sqlGames.away_club_goals) AS Total_goals_away, FIRST(sqlClubs.pretty_name) AS Name_club 
+        FROM sqlLeagues
+        JOIN sqlGames ON sqlLeagues.league_id = sqlGames.competition_code
+        JOIN sqlClubs ON sqlGames.away_club_id = sqlClubs.club_id
+        GROUP BY sqlLeagues.league_id
+    ''').toJSON().collect()
+    return json.dumps(result)
+
+''' Returns the total amount of european leagues ''' 
+@app.route('/api/leagues', methods=['GET'])
+def leagues():
+    df_leagues.createOrReplaceTempView('leagues')
+    query = spark.sql('''
+        SELECT name, league_id 
+        FROM leagues
+    ''').toJSON().collect()
+    return json.dumps(query)
+
+''' Returns domestic cups  '''
+@app.route('/api/domestic_cups', methods=['GET'])
+def domestic_cups():
+    df_competitions.createOrReplaceTempView('competitions')
+    query = spark.sql('''
+        SELECT name, country_name
+        FROM competitions
+        WHERE type = "domestic_cup"
+    ''').toJSON().collect()
+    return json.dumps(query)
 
 ''' Get the different team names for "sqlClubs.pretty_name" variable '''
 @app.route('/api/get_data_club_name', methods=['GET'])
@@ -160,7 +197,6 @@ def pretty_name_selected():
     request_data = json.loads(request.data)
     pretty_name = request_data['pretty_name']
     return json.dumps({"message": "success"})
-
 
 if __name__ == '__main__':
     load_data_bucket()
