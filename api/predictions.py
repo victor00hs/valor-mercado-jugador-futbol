@@ -11,7 +11,7 @@ data = pd.read_csv(path_to_data + 'epl.csv')
 #Muestra los datos en formato grafico de barras y en tabla usando streamlit
 def show_predictions():
     st.header('Predicción para victorias como locales')
-    st.write('Se muestran los coeficientes predecidos para las victorias como local, valores positivos indican probabilidad de ganar en casa para equipos que juegan de local, mientras que para equipos que juegan de visitantes, los valores más negativos indican más probabilidades de ganar')
+    st.write('Se muestran los coeficientes predecidos para las victorias como local y como visitante para todos los equipos de la Premiere League, siendo los valores más positivos más probabilidad de ganar y los más negativos más posibilidades de perder.')
     res = get_predictions() 
     #res[0] -> almacena todos los valores desordenados
     #res[1] -> alamcena la lista de tuplas conlos resultados 

@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import requests
 import json
+from  api.predictions import *
 
 foot_selected = "Left"
 position_selected = "Midfield"
@@ -117,6 +118,7 @@ def mainpage_requests():
     r_roaster_value = requests.get(url='http://127.0.0.1:5000/api/roaster_value').content
 
     jugador_resume_table(r_jugador_resume)
+    show_predictions()
     seleccion_inglesa_table(r_seleccion_inglesa)
     most_expensive_players(r_most_expensive_players)
     roaster_value(r_roaster_value)
