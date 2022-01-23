@@ -6,6 +6,7 @@ from flask_cors import CORS
 # Global variables
 foot = "Left"
 position = "Midfield"
+pretty_name = "1 FC Koln"
 
 spark = SparkSession.builder \
     .appName('main') \
@@ -55,6 +56,7 @@ def jugador_resume():
     ORDER BY player_id ''').toJSON().collect()
     return json.dumps(result)
 
+''' Take players where foot and position is introduced by the user '''
 @app.route('/api/jugador_position_foot_price', methods=['GET'])
 def jugador_position_foot_price():
     df_players.createOrReplaceTempView('sqlPlayers')
@@ -93,7 +95,8 @@ def position_selected():
     request_data = json.loads(request.data)
     position = request_data['position']
     return json.dumps({'message': 'success'})
-    
+
+''' Take players from England of each position with their market price value  ''' 
 @app.route('/api/seleccion_inglesa', methods=['GET'])
 def seleccion_inglesa():
     df_players.createOrReplaceTempView('sqlPlayers')
@@ -121,6 +124,7 @@ def most_expensive_per_position():
     ''').toJSON().collect()
     return json.dumps(query)
 
+''' Nombre del equipo, numero de jugadores, el valor del equipo y la media del valor equipo '''
 @app.route('/api/roaster_value', methods=['GET'])
 def roaster_value():
     df_clubs.createOrReplaceTempView('sqlClubs')
@@ -131,16 +135,32 @@ def roaster_value():
     ''').toJSON().collect()
     return json.dumps(result)
 
+''' Results of all games won as local '''
 @app.route('/api/local_victories', methods=['GET'])
 def local_victories():
     df_clubs.createOrReplaceTempView('sqlClubs')
     df_games.createOrReplaceTempView('sqlGames')
-    result = spark.sql(''' SELECT sqlGames.game_id, sqlGames.home_club_id, sqlGames.away_club_id, sqlGames.home_club_goals, sqlGames.away_club_goals, 
-    sqlClubs.club_id, sqlClubs.pretty_name 
+    result = spark.sql(''' SELECT sqlClubs.pretty_name, sqlGames.home_club_id AS ID_local, sqlGames.away_club_id AS ID_visitante, sqlGames.home_club_goals AS Goles_local, 
+    sqlGames.away_club_goals AS Goles_visitante
     FROM sqlGames
     JOIN sqlClubs ON sqlGames.home_club_id = sqlClubs.club_id
-    WHERE sqlGames.home_club_id ="58" AND sqlGames.away_club_goals < sqlGames.home_club_goals ''').toJSON().collect()
+    WHERE sqlClubs.pretty_name =\"{}\" AND sqlGames.away_club_goals < sqlGames.home_club_goals '''.format(pretty_name)).toJSON().collect()
     return json.dumps(result)
+
+''' Get the different team names for "sqlClubs.pretty_name" variable '''
+@app.route('/api/get_data_club_name', methods=['GET'])
+def get_data_club_name():
+    rows = df_clubs.select('pretty_name').distinct().orderBy('pretty_name', ascending=True).collect()
+    return json.dumps([row['pretty_name'] for row in rows])
+
+''' Take value of "pretty_name" from selectBox '''
+@app.route('/api/pretty_name_selected', methods=['POST'])
+def pretty_name_selected():
+    global pretty_name
+    request_data = json.loads(request.data)
+    pretty_name = request_data['pretty_name']
+    return json.dumps({"message": "success"})
+
 
 if __name__ == '__main__':
     load_data_bucket()
