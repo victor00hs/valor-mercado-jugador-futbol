@@ -4,6 +4,7 @@ import requests
 import json
 import plotly.graph_objects as go
 import plotly.express as px
+from  api.predictions import *
 
 # Global vars
 foot_selected = "Left"
@@ -153,6 +154,7 @@ def mainpage_requests():
     row1(r_leagues, r_domestic_cups)
     most_expensive_players(r_most_expensive_players)
     jugador_resume_table(r_jugador_resume)
+    show_predictions()
     seleccion_inglesa_table(r_seleccion_inglesa)
     roaster_value(r_roaster_value)
 
